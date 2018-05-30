@@ -1,32 +1,49 @@
 import scrapy
 from scrapy.selector import Selector
+from scrapy.crawler import CrawlerProcess
+from scrapy.utils.project import get_project_settings
+from scrapy.crawler import CrawlerRunner
+from scrapy.utils.log import configure_logging
+
+
 import json
+import pandas as pd
+
 
 class MinsaSpider(scrapy.Spider):
     name = "minsaSpider"
-    
-    def __init__(self, n=1,  idp='8766', ide='0095801', *args, **kwargs):
+
+    def __init__(self,  idp=None, ide=None, *args, **kwargs):
         super(MinsaSpider, self).__init__(*args, **kwargs)
         self.idp = idp
         self.ide = ide
-        self.n = int(n)
+
+        with open('minsadata/medicamentos.csv', newline='') as file:
+            data = pd.read_csv(file, encoding='Latin-1')
+            self.idps = data['Cod_Prod'].values.tolist()
+
+        with open('minsadata/establecimientos.csv') as file:
+            data = pd.read_csv(file, encoding='Latin-1')
+            self.ides = data['CODIGO DE ESTABLECIMIENTO'].values.tolist()
     def start_requests(self):
-        """
-        urls = [
-            'http://observatorio.digemid.minsa.gob.pe/Precios/ProcesoL/Consulta/FichaProducto.aspx?idp=8766&ide=0095801'
-        ]
-        for url in urls:
-            yield scrapy.Request(url=url, callback=self.parse)
-        """
+
         start_url = 'http://observatorio.digemid.minsa.gob.pe/Precios/ProcesoL/Consulta/FichaProducto.aspx'
-        for i in range(self.n):
-            yield scrapy.Request(url=start_url+'?idp='+self.idp+'&ide='+self.ide, callback=self.parse)
+
+        for producto in range(1):
+            self.idp = str(self.idps[producto])
+            for establecimiento in range(10000, len(self.ides)):
+                self.ide = str(self.ides[establecimiento])
+                yield scrapy.Request(url=start_url+'?idp='+self.idp+'&ide='+self.ide.zfill(7), callback=self.parse)
 
     def parse(self, response):
-        data = {}        
-        filename = 'med-{0}-{1}.json'.format(self.idp,self.ide) 
-        with open(filename, 'w') as f:
-            for span in response.xpath('//span'):
-                data[Selector(text=span.extract()).xpath('//span/@id').extract_first()] = Selector(text=span.extract()).xpath('//span/text()').extract_first()
-            json.dump(data, f)
-        self.log('Saved file %s' % filename)
+        data = {}
+        filename = 'data/med-{0}-{1}.json'.format(self.idp,self.ide.zfill(7))
+        for span in response.xpath('//span'):
+            data[Selector(text=span.extract()).xpath('//span/@id').extract_first()] = Selector(text=span.extract()).xpath('//span/text()').extract_first()
+        if(data["MontoEmpaque"] != "No Determinado"):
+            with open(filename, 'w') as f:
+                json.dump(data, f)
+            self.log('Saved file %s' % filename)
+
+        else:
+            self.log('Empty file idp={0} ide={1}'.format(self.idp, self.ide.zfill(7)))
