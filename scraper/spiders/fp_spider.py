@@ -17,6 +17,17 @@ class MinsaSpider(scrapy.Spider):
         super(MinsaSpider, self).__init__(*args, **kwargs)
         self.idp = idp
         self.ide = ide
+        self.keys = {
+                        "Medicamento": "medicamento",
+                        "Presentación" : "presentacion",
+                        "MontoEmpaque" : "monto_empaque",
+                        "CondicionV" : "condicion_v",
+                        "Estab" : "estab",
+                        "Direccion" : "direccion",
+                        "Ubicacion" : "ubicacion",
+                        "Telefono" : "telefono",
+                        "Horario" : "horario"
+                    }
 
         with open('minsadata/medicamentos.csv', newline='') as file:
             data = pd.read_csv(file, encoding='Latin-1')
@@ -25,6 +36,7 @@ class MinsaSpider(scrapy.Spider):
         with open('minsadata/establecimientos.csv') as file:
             data = pd.read_csv(file, encoding='Latin-1')
             self.ides = data['CODIGO DE ESTABLECIMIENTO'].values.tolist()
+
     def start_requests(self):
 
         start_url = 'http://observatorio.digemid.minsa.gob.pe/Precios/ProcesoL/Consulta/FichaProducto.aspx'
@@ -38,9 +50,12 @@ class MinsaSpider(scrapy.Spider):
     def parse(self, response):
         data = {}
         filename = 'data/med-{0}-{1}.json'.format(self.idp,self.ide.zfill(7))
+        data = {'idp': self.idp, 'ide': self.ide.zfill(7)}
         for span in response.xpath('//span'):
-            data[Selector(text=span.extract()).xpath('//span/@id').extract_first()] = Selector(text=span.extract()).xpath('//span/text()').extract_first()
-        if(data["MontoEmpaque"] != "No Determinado"):
+            key = Selector(text=span.extract()).xpath('//span/@id').extract_first()
+            if key in self.keys:
+                data[self.keys[key]] = Selector(text=span.extract()).xpath('//span/text()').extract_first()
+        if(data["monto_empaque"] != "No Determinado"):
             with open(filename, 'w') as f:
                 json.dump(data, f)
             self.log('Saved file %s' % filename)
