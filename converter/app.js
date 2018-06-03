@@ -1,7 +1,7 @@
 const datafolder = "../data/";
 const fs = require('fs');
 var googleMapsClient = require('@google/maps').createClient({
-	key: 'AIzaSyCpT0W7a-lzDNG853GPKhgCk2MKl2GO9ME',
+	key: 'CONSIGUE UN KEY',
 	Promise: Promise
 });
 var files=fs.readdirSync(datafolder)
