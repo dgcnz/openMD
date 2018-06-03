@@ -1,27 +1,31 @@
 const datafolder = "../data/";
 const fs = require('fs');
 var googleMapsClient = require('@google/maps').createClient({
-	key: 'CONSIGUE TU KEY'
+	key: 'AIzaSyCpT0W7a-lzDNG853GPKhgCk2MKl2GO9ME',
+	Promise: Promise
 });
-var filesname=[];
-fs.readdir(datafolder, function (err,files){
-	files.forEach(file => {
-		let tmp=JSON.parse(fs.readFileSync(datafolder+file,'utf8'));
-		googleMapsClient.geocode({
-			address: tmp.direccion +" "+ tmp.ubicacion
-		}, function(err, response) {
-			if (!err) {
-				console.log(tmp.direccion +" "+ tmp.ubicacion);
-				console.log(response.json.results[0].geometry.location);
-			}
-		});
-		filesname.push(
-			{
-				direcion: tmp.direccion,
-				region: tmp.ubicacion
-			}
-		);
+var files=fs.readdirSync(datafolder)
+var data=files.map((file)=>{
+	let databotica=JSON.parse(fs.readFileSync(datafolder+file,'utf8'))
+	return googleMapsClient.geocode({
+		address: databotica.direccion.toLowerCase()+", "+ databotica.ubicacion.toLowerCase()
 	})
-	//console.log(filesname);
+		.asPromise()
+		.then(function (response){
+			databotica.coordenadas= response.json.results[0].geometry.location
+			return databotica
+		})
+		.catch(err=>{
+			console.log(err);
+			return err
+		})
 })
+Promise.all(data)
+	.then((d)=>{
+		let m=JSON.stringify(d)
+		console.log(m);
+	})
+
+
+
 
