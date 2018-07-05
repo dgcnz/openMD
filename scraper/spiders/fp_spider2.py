@@ -71,7 +71,7 @@ class MinsaSpider(scrapy.Spider):
                     datamed[self.keys[k]] = Selector(text=span.extract()).xpath('//span/text()').extract_first()
         if(datamed["monto_empaque"] != "No Determinado"):
             # Location to coordinates
-            g = geocoder.google(datamed["direccion"], key='AIzaSyDhY9yQRQnq1lKBfxVMK6_oe7fSh1KmnT4')
+            g = geocoder.google(datamed["direccion"], key='')
             coordinates = g.latlng
             datamed["latitud"] = str(coordinates[0])
             datamed["longitud"] = str(coordinates[1])

@@ -74,7 +74,7 @@ class MinsaSpider(scrapy.Spider):
 
             # Location to coordinates
 
-            g = geocoder.google(datamed["direccion"], key='AIzaSyDhY9yQRQnq1lKBfxVMK6_oe7fSh1KmnT4')
+            g = geocoder.google(datamed["direccion"], key='')
             coordinates = g.latlng
             datamed["monto_empaque"] = float(datamed["monto_empaque"])
             datamed["latitud"] = coordinates[0]
